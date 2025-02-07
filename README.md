@@ -1,7 +1,5 @@
 # Book Collection Manager
 
-A modern, feature-rich web application for managing your personal book collection. Built with React, TypeScript, and Redux Toolkit, this application provides an intuitive interface to organize and track your books.
-
 ## Features
 
 - **Book Management**: Add, edit, and delete books from your collection
