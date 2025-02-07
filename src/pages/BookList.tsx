@@ -4,6 +4,8 @@ import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import type { RootState } from "../store/store"
 import { FaSearch, FaFilter, FaChevronDown } from "react-icons/fa"
+import Loading from "../components/Loading"
+import { RxCross2 } from "react-icons/rx"
 
 interface Book {
   id: string
@@ -26,7 +28,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   onChange,
   options,
   placeholder = 'Select option',
-  icon = <FaFilter />
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
@@ -42,36 +43,100 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isOpen) {
+        switch (event.key) {
+          case 'Escape':
+            setIsOpen(false);
+            break;
+          case 'Enter':
+            if (document.activeElement?.getAttribute('role') === 'option') {
+              (document.activeElement as HTMLElement).click();
+            }
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  const handleClear = () => {
+    onChange('');
+    setIsOpen(false);
+  };
+
   return (
-    <div ref={selectRef} className="relative">
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center cursor-pointer w-full min-w-[3rem] pl-10 rounded-md border-[#000] p-3 shadow-sm focus:border-indigo-500 outline-none focus:ring-indigo-500 bg-white"
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-label="Filter by genre"
+    <div 
+      ref={selectRef} 
+      className="relative w-full max-w-xs"
+      role="combobox"
+      aria-expanded={isOpen}
+      aria-haspopup="listbox"
+    >
+      <div 
+        className={`
+          flex items-center w-full rounded-md border 
+          ${isOpen ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-gray-300'}
+          bg-white shadow-sm transition-all duration-200
+        `}
       >
-        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-800">
-          {icon}
-        </span>
-        <span className="flex-1">{value || placeholder}</span>
-        <FaChevronDown
-          className={`ml-2 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+       <FaFilter 
+       onClick={() => setIsOpen(!isOpen) }
+       className="w-4.5 h-4.5 cursor-pointer absolute left-3 text-gray-500" />
+
+
+        <div 
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 py-2 pl-10 pr-3 cursor-pointer"
+        >
+          <span className={`${value ? 'text-black' : 'text-gray-500'}`}>
+            {value || placeholder}
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2 pr-2">
+          {value && (
+            <button 
+              onClick={handleClear}
+              className="text-gray-400 cursor-pointer hover:text-gray-600"
+              aria-label="Clear selection"
+            >
+              <RxCross2 className=" w-5 h-5 " strokeWidth={1} />
+            </button>
+          )}
+          
+          <div 
+          onClick={() => setIsOpen(!isOpen) }
+          className={`text-gray-500 cursor-pointer transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+            <FaChevronDown />
+          </div>
+        </div>
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-          <div
-            role="listbox"
-            className="py-1 px-2 "
-          >
-            <div
+        <div 
+          className="
+            absolute z-20 w-full mt-1 
+            bg-white border border-gray-200 
+            rounded-md shadow-lg 
+            max-h-60 overflow-y-auto 
+            scrollbar-hide
+          "
+          role="listbox"
+        >
+          <div className="py-1">
+            <div 
               role="option"
-              className={`px-4 py-2 rounded cursor-pointer hover:bg-indigo-50 ${
-                value === '' ? 'bg-indigo-100' : ''
-              }`}
+              tabIndex={0}
+              aria-selected={value === ''}
+              className={`
+                px-4 py-2 cursor-pointer 
+                hover:bg-indigo-50 
+                ${value === '' ? 'bg-indigo-100' : ''}
+              `}
               onClick={() => {
                 onChange('');
                 setIsOpen(false);
@@ -79,13 +144,18 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
             >
               All Genres
             </div>
+
             {options.map((option) => (
               <div
                 key={option}
                 role="option"
-                className={`px-4 py-2 cursor-pointer hover:bg-indigo-50 ${
-                  value === option ? 'bg-indigo-100' : ''
-                }`}
+                tabIndex={0}
+                aria-selected={value === option}
+                className={`
+                  px-4 py-2 cursor-pointer 
+                  hover:bg-indigo-50 
+                  ${value === option ? 'bg-indigo-100' : ''}
+                `}
                 onClick={() => {
                   onChange(option);
                   setIsOpen(false);
@@ -101,6 +171,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   );
 };
 
+
 const BookList: React.FC = () => {
   const books = useSelector((state: RootState) => state.books.books)
   const [searchTerm, setSearchTerm] = useState("")
@@ -112,20 +183,23 @@ const BookList: React.FC = () => {
     return books.filter((book) => {
       const matchesSearch =
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.author.toLowerCase().includes(searchTerm.toLowerCase())
+        book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.genre.toLowerCase().includes(searchTerm.toLowerCase())
+
       const matchesGenre = !filterGenre || book.genre === filterGenre
       return matchesSearch && matchesGenre
     })
   }, [books, searchTerm, filterGenre])
 
   if (!books) {
-    return <div>Loading...</div>
+    return <Loading />
   }
 
   return (
     <div>
       <div className="mb-6 px-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
+
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-800" />
           <input
             type="text"
@@ -157,7 +231,7 @@ const BookList: React.FC = () => {
                   book.coverUrl 
                 }
                 alt={`Cover of ${book.title}`}
-                className="object-cover w-full h-48 rounded-t-lg"
+                className="object-cover object-center w-full h-48 rounded-t-lg"
               />
             </div>
             <div className="p-4">

@@ -1,30 +1,15 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
 import { IoBookSharp, IoLibrarySharp } from "react-icons/io5"
 import { FiPlusCircle } from "react-icons/fi"
 import type React from "react" 
-import { bookThoughts } from "../utils/bookThoughts"
+import { useRandomThought } from "../hooks/useRandomThought"
+import Card from "../components/Card"
 
 type HomeProps = {}
 
 const Home: React.FC<HomeProps> = () => {
   
-  const [currentThought, setCurrentThought] = useState(bookThoughts[0])
-
-  useEffect(() => {
-    
-    const getRandomThought = () => {
-      const randomIndex = Math.floor(Math.random() * bookThoughts.length)
-      setCurrentThought(bookThoughts[randomIndex])
-    }
-
-    getRandomThought()
-
-    const interval = setInterval(getRandomThought, 60000)
-    
-    return () => clearInterval(interval)
-  }, [])
+  const currentThought = useRandomThought()
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,11 +25,10 @@ const Home: React.FC<HomeProps> = () => {
 
       <div className="mt-12">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-          <Link
-            to="/books"
-            className="relative group bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          <Card 
+          to="books"
           >
-            <div>
+          <div>
               <IoLibrarySharp className="h-8 w-8 text-indigo-600" />
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">View Collection</h3>
@@ -53,13 +37,12 @@ const Home: React.FC<HomeProps> = () => {
                 </p>
               </div>
             </div>
-          </Link>
+          </Card>
 
-          <Link
-            to="/add"
-            className="relative group bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          <Card
+          to="add"
           >
-            <div>
+          <div>
               <FiPlusCircle className="h-8 w-8 text-indigo-600" />
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">Add New Book</h3>
@@ -68,7 +51,7 @@ const Home: React.FC<HomeProps> = () => {
                 </p>
               </div>
             </div>
-          </Link>
+          </Card>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
@@ -6,15 +6,30 @@ import { deleteBook, updateBook } from '../store/bookSlice';
 import BookForm from '../components/BookForm';
 import { MdModeEditOutline } from 'react-icons/md';
 import { FaTrashAlt } from 'react-icons/fa';
+import Loading from '../components/Loading';
 
 const BookDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
   const book = useSelector((state: RootState) =>
     state.books.books.find((b) => b.id === id)
   );
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <Loading />
+  }
 
   if (!book) {
     return (
@@ -69,13 +84,13 @@ const BookDetails: React.FC = () => {
                 onClick={() => setIsEditing(true)}
                 className="p-2 text-gray-400 hover:text-indigo-600"
               >
-                <MdModeEditOutline className="h-5 w-5" />
+                <MdModeEditOutline className="h-5 w-5 cursor-pointer" />
               </button>
               <button
                 onClick={handleDelete}
                 className="p-2 text-gray-400 hover:text-red-600"
               >
-                <FaTrashAlt className="h-5 w-5" />
+                <FaTrashAlt className="h-5 cursor-pointer w-5" />
               </button>
             </div>
           </div>
